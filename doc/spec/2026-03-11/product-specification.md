@@ -371,58 +371,72 @@ Date: 2026-03-11
 - 通知配信シーケンス
 - 権限制御マトリクス
 
+## 15. Knowledge 参照で追加する機能要件
 
-## 15. Knowledge 参考で追加した機能要件
+`support-project/knowledge` の公開情報（README および UI 文言リソース）と画面構成をベンチマークとして、必要な機能・UI・API 要件を補強する。
 
-`support-project/knowledge` の公開実装（画面構成・Control/API構成）を参考に、MVP 後に優先検討すべき機能を整理する。
-
-### 15.1 追加機能要件（機能）
+### 15.1 追加機能要件
 
 | ID | 機能名 | 優先度 | 追加要件 |
 |---|---|---|---|
-| F-18 | ストック（個人クリップ） | Should | 記事を個人の保存リストへ追加 / 解除し、後で再参照できるようにする |
-| F-19 | 添付ファイル管理 | Should | 記事 / コメントに紐づく添付ファイルのアップロード、参照、権限制御を提供する |
-| F-20 | 記事リアクション拡張 | Could | Star に加えて Like 系リアクションを将来拡張可能なイベント構造で保持する |
-| F-21 | テンプレート管理（管理者） | Should | 管理者が投稿テンプレートを作成・更新・無効化できる |
-| F-22 | ピン留め（運用告知） | Could | 重要記事を上位表示するピン留め設定を管理者が操作できる |
-| F-23 | Webhook 通知 | Could | 記事公開・コメント作成などのイベントを外部システムへ Webhook 配信できる |
-| F-24 | ユーザー招待 / サインアップ管理 | Could | 招待制または承認制サインアップの有効化・承認ワークフローを提供する |
+| F-18 | 下書き自動保存 | Should | 編集途中の記事を自動保存し、誤操作での消失を防ぐ |
+| F-19 | 添付ファイル管理 | Must | 記事にファイル/画像を添付・削除できる |
+| F-20 | ストック（個人クリップ） | Should | 後で読むために記事を個人保存できる |
+| F-21 | 閲覧履歴 | Should | 自分が閲覧した記事の履歴を確認できる |
+| F-22 | 複合検索フィルタ | Must | タグ/グループ/作成者を組み合わせて検索できる |
+| F-23 | テンプレート管理（管理者） | Should | 管理者が投稿テンプレートを作成・更新・無効化できる |
+| F-24 | ピン留め（運用告知） | Could | 重要記事を上位表示するピン留め設定を管理者が操作できる |
+| F-25 | Webhook 通知 | Could | 記事公開・コメント作成などのイベントを外部システムへ Webhook 配信できる |
+| F-26 | ユーザー招待 / サインアップ管理 | Could | 招待制または承認制サインアップの有効化・承認ワークフローを提供する |
 
-### 15.2 追加機能要件（UI）
+### 15.2 追加 UI 要件
+
+- 記事編集画面に「下書き保存中」状態表示を持つ
+- 編集画面にドラッグ&ドロップの添付ファイルアップロード領域を持つ
+- グローバルナビゲーションに「ストック」「タグ」「複合検索」への導線を持つ
+- 一覧画面に「人気タグ」「閲覧履歴」導線を持つ
+- 記事詳細画面に「更新履歴」「いいね/Star 実行ユーザー表示」導線を持つ
 
 | 画面ID | パス | ページ名 | 主な利用者 | 用途 |
 |---|---|---|---|---|
-| P-26 | `/stocks` | ストック一覧 | ログイン済みユーザー | 自分が保存した記事一覧を閲覧する |
-| P-27 | `/posts/:postId/stocks` | 記事別ストック閲覧 | 記事閲覧権限を持つユーザー | 記事の保存状況を確認する（公開情報のみ） |
+| P-26 | `/me/stocks` | ストック一覧 | ログイン済みユーザー | ストックした記事の一覧 |
+| P-27 | `/me/history` | 閲覧履歴 | ログイン済みユーザー | 閲覧履歴の確認 |
 | P-28 | `/admin/templates` | テンプレート管理 | 管理者 | 投稿テンプレート一覧 / 作成 / 編集 |
 | P-29 | `/admin/pins` | ピン留め管理 | 管理者 | ホーム上位表示の優先記事を設定する |
 | P-30 | `/admin/webhooks` | Webhook 管理 | 管理者 | Webhook エンドポイント設定、署名鍵、再送制御 |
 | P-31 | `/admin/users/invitations` | 招待 / 承認管理 | 管理者 | 招待発行、承認待ちユーザー処理 |
 
-### 15.3 追加機能要件（API）
+### 15.3 追加 API 要件
 
 | ID | Method | Path | 説明 |
 |---|---|---|---|
-| A-80 | `GET` | `/api/stocks` | 自分のストック一覧取得 |
-| A-81 | `POST` | `/api/posts/:postId/stocks` | 記事をストックへ追加 |
-| A-82 | `DELETE` | `/api/posts/:postId/stocks` | 記事をストックから削除 |
-| A-83 | `POST` | `/api/attachments` | 添付ファイルアップロード |
-| A-84 | `GET` | `/api/attachments/:attachmentId` | 添付ファイルメタデータ取得 |
-| A-85 | `DELETE` | `/api/attachments/:attachmentId` | 添付ファイル削除（権限付き） |
-| A-86 | `GET` | `/api/admin/templates` | テンプレート一覧取得 |
-| A-87 | `POST` | `/api/admin/templates` | テンプレート作成 |
-| A-88 | `PATCH` | `/api/admin/templates/:templateId` | テンプレート更新 |
-| A-89 | `GET` | `/api/admin/pins` | ピン留め設定取得 |
-| A-90 | `POST` | `/api/admin/pins` | ピン留め設定作成 / 更新 |
-| A-91 | `GET` | `/api/admin/webhooks` | Webhook 設定一覧取得 |
-| A-92 | `POST` | `/api/admin/webhooks` | Webhook 設定作成 |
-| A-93 | `POST` | `/api/admin/webhooks/:webhookId/test` | Webhook テスト送信 |
-| A-94 | `GET` | `/api/admin/invitations` | 招待一覧取得 |
-| A-95 | `POST` | `/api/admin/invitations` | 招待作成 |
+| A-80 | `PUT` | `/api/posts/:postId/draft` | 下書き自動保存 |
+| A-81 | `POST` | `/api/posts/:postId/attachments` | 添付ファイル追加 |
+| A-82 | `DELETE` | `/api/attachments/:attachmentId` | 添付ファイル削除 |
+| A-83 | `POST` | `/api/posts/:postId/stocks` | ストック追加 |
+| A-84 | `DELETE` | `/api/posts/:postId/stocks` | ストック解除 |
+| A-85 | `GET` | `/api/me/stocks` | ストック一覧取得 |
+| A-86 | `GET` | `/api/me/history` | 閲覧履歴取得 |
+| A-87 | `GET` | `/api/admin/templates` | テンプレート一覧取得 |
+| A-88 | `POST` | `/api/admin/templates` | テンプレート作成 |
+| A-89 | `PATCH` | `/api/admin/templates/:templateId` | テンプレート更新 |
+| A-90 | `GET` | `/api/admin/pins` | ピン留め設定取得 |
+| A-91 | `POST` | `/api/admin/pins` | ピン留め設定作成 / 更新 |
+| A-92 | `GET` | `/api/admin/webhooks` | Webhook 設定一覧取得 |
+| A-93 | `POST` | `/api/admin/webhooks` | Webhook 設定作成 |
+| A-94 | `POST` | `/api/admin/webhooks/:webhookId/test` | Webhook テスト送信 |
+| A-95 | `GET` | `/api/admin/invitations` | 招待一覧取得 |
+| A-96 | `POST` | `/api/admin/invitations` | 招待作成 |
 
-### 15.4 仕様反映時の実装ガイド
+### 15.4 実装ガイド
 
 - 既存の権限制御原則（`WIP` 秘匿、`group` 公開制御）を新機能にも強制適用する。
 - `stocks` / `attachments` は記事閲覧権限を前提に判定し、権限喪失後はアクセス不可とする。
 - 管理系 API（templates, pins, webhooks, invitations）は管理者グループ所属ユーザー限定にする。
 - Webhook は通知と同様に「作成」と「配信試行」を分離し、失敗時リトライと監査ログを保持する。
+
+### 15.5 参照元
+
+- `support-project/knowledge` README
+- `support-project/knowledge` の `appresource_ja.properties`（UI 文言: ストック、複合検索、閲覧履歴、下書き保存中、公開区分、添付アップロード等）
+
