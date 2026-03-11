@@ -20,6 +20,10 @@ Date: 2026-03-11
 - [ADR 001](/home/soudai/takt/saga-blog/doc/adr/2026-03-11/001-application-architecture-baseline.md)
 - [ADR 002](/home/soudai/takt/saga-blog/doc/adr/2026-03-11/002-content-visibility-and-group-administration.md)
 - [ADR 003](/home/soudai/takt/saga-blog/doc/adr/2026-03-11/003-bootstrap-admin-and-slack-delivery.md)
+- [Knowledge (support-project) リポジトリ](https://github.com/support-project/knowledge)
+- [Knowledge オンラインマニュアル](https://information-knowledge.support-project.org/ja/manual)
+- [GROWI リポジトリ](https://github.com/weseek/growi)
+- [Docmost リポジトリ](https://github.com/docmost/docmost)
 
 ## 3. スコープ
 
@@ -181,6 +185,74 @@ Date: 2026-03-11
 - コメント通知、メンション通知は recipient 単位で送る
 - Slack identity が未連携のユーザーにはアプリ内通知のみ送る
 
+### 6.14 Knowledge 参考の追加機能要件
+
+Knowledge の公開マニュアルで提示されている利用機能（`Bookmark`, `添付ファイル`, `下書き保存`, `公開範囲指定`, `フィルター`, `プレゼンテーション`）を参考に、以下を機能要件へ追加する。
+
+- ブックマーク（Stock）機能
+  - ユーザーは閲覧可能な記事をブックマークできる
+  - ユーザーは自分のブックマーク一覧を持てる
+  - ブックマークは記事の可視性変更をリアルタイムで再評価し、アクセス不可になった記事は非表示にする
+- 添付ファイル機能
+  - 記事およびコメントへ添付ファイルを追加できる
+  - 添付ファイル名、サイズ、MIME type、アップロードユーザー、作成日時を保持する
+  - 添付ファイルも記事と同一の権限制御を適用する
+- 下書き保存（Draft）機能
+  - 公開前編集とは別に、エディタのローカル / サーバー下書き保存を提供する
+  - 下書きは公開イベントを発生させない
+  - 下書き復元時に最終更新日時と競合情報を表示する
+- フィルター / マイフィード
+  - `自分が作成`, `自分がコメント`, `自分がブックマーク`, `特定タグ` で記事一覧を絞り込める
+  - フィルター条件は保存でき、次回アクセス時の初期表示に利用する
+- プレゼンテーション表示
+  - 記事をスライドモードで表示できる
+  - 見出し区切り（例: `---`）を 1 スライドとして扱う
+  - この機能は MVP では Should とし、Phase 4 以降で導入判断する
+
+### 6.15 GROWI / Docmost 参考の追加機能要件
+
+GROWI / Docmost の公開機能（階層ページ、スペース、リアルタイム共同編集、添付、コメント、履歴、検索、権限管理、図表埋め込み）を参考に、以下を要件化する。
+
+- 情報構造
+  - スペース（組織単位）配下に階層ページを持てる
+  - URL は階層パス（例: `/spaces/eng/db/adr/xxx`）で一意に管理する
+  - ページ移動（階層変更）時はリダイレクト情報を保持する
+- 共同編集
+  - 編集中ユーザーの presence を表示する
+  - 同時編集競合を抑えるため、楽観ロック + 自動下書き保存を提供する
+  - 将来拡張でリアルタイム共同編集（CRDT/OT）を採用可能な境界を設ける
+- ドキュメント表現
+  - Mermaid などの図表埋め込みをサポートする
+  - 外部埋め込み（例: Miro, Loom 相当）は許可リスト方式で段階導入する
+  - 添付ファイルは画像/PDF/Office を MVP 対象にする
+- 権限と監査
+  - スペース単位の閲覧/編集権限を持てる
+  - 重要ページ（設計書/ADR）は更新時に change summary を必須にする
+  - 履歴比較は本文差分だけでなくメタ情報差分（タグ、公開範囲）も表示する
+
+### 6.16 利用用途別の機能要件
+
+利用用途（社内ナレッジ、日報、設計書、DB 設計、ADR、議事録）に対し、テンプレートと必須項目を定義する。
+
+- 社内ナレッジ
+  - 必須: タイトル、カテゴリ、タグ、本文、公開範囲
+  - 推奨: 関連リンク、更新履歴サマリ
+- 日報
+  - 必須: 対象日、所属、実績、課題、翌営業日の予定
+  - 推奨: 工数サマリ、参照チケット
+- 設計書
+  - 必須: 背景、目的、要件、設計方針、代替案、テスト観点
+  - 推奨: 図表（Mermaid）、レビュー記録
+- DB 設計
+  - 必須: テーブル定義、カラム定義、制約、インデックス、移行方針
+  - 推奨: ER 図、性能見積り、運用手順
+- ADR
+  - 必須: Context、Decision、Status、Consequences、Date
+  - 推奨: 関連 ADR 参照、破棄/置換履歴
+- 議事録
+  - 必須: 会議名、開催日時、参加者、議題、決定事項、Action Items
+  - 推奨: 次回予定、録画/資料リンク
+
 ## 7. 機能一覧
 
 | ID | 機能名 | 優先度 | 説明 |
@@ -200,8 +272,19 @@ Date: 2026-03-11
 | F-13 | アプリ内通知 | Must | 未読管理を含めて通知を表示する |
 | F-14 | Slack bot 通知 | Must | 権限制御込みで Slack に通知する |
 | F-15 | カテゴリ / タグ | Must | 記事分類と絞り込みに使う |
-| F-16 | テンプレート | Should | 投稿テンプレートを提供する |
-| F-17 | Watch | Could | 記事購読通知を提供する |
+| F-16 | ブックマーク（Stock） | Should | 記事の保存と再参照を可能にする |
+| F-17 | 添付ファイル | Should | 記事/コメントにファイルを添付できる |
+| F-18 | 下書き保存 | Should | エディタの下書きを保存・復元できる |
+| F-19 | 保存フィルター | Should | 条件保存による一覧の再利用を可能にする |
+| F-20 | プレゼンテーション表示 | Could | 記事をスライド表示する |
+| F-21 | テンプレート | Should | 投稿テンプレートを提供する |
+| F-22 | Watch | Could | 記事購読通知を提供する |
+| F-23 | スペース管理 | Should | 部門/用途ごとの情報分離を行う |
+| F-24 | 階層ページ | Should | パスベースで親子関係を持つページ構造 |
+| F-25 | 編集 presence | Should | 編集中ユーザーを表示し競合を抑制する |
+| F-26 | 図表埋め込み | Should | Mermaid 等で設計情報を可視化する |
+| F-27 | 用途別テンプレート | Must | 日報/ADR/議事録/設計書の必須項目を統一 |
+| F-28 | 議事録 Action 管理 | Should | 決定事項とアクションを追跡可能にする |
 
 ## 8. ページ一覧
 
@@ -232,6 +315,16 @@ Date: 2026-03-11
 | P-23 | `/admin/groups/:groupId/members` | グループメンバー管理 | 管理者 | メンバー追加 / 削除 |
 | P-24 | `/admin/integrations/slack` | Slack 管理設定 | 管理者 | Bot 設定、通知先設定 |
 | P-25 | `/admin/system/init-status` | 初期化状態確認 | 管理者 | bootstrap 状態確認 |
+| P-26 | `/stocks` | ブックマーク一覧 | ログイン済みユーザー | 自分が保存した記事一覧 |
+| P-27 | `/posts/:postId/attachments` | 添付ファイル管理 | 権限を持つユーザー | 添付ファイルの追加/削除 |
+| P-28 | `/drafts` | 下書き一覧 | ログイン済みユーザー | 未公開下書きの再編集導線 |
+| P-29 | `/posts/:postId/presentation` | プレゼン表示 | 権限を持つユーザー | 記事のスライド表示 |
+| P-30 | `/filters` | 保存フィルター管理 | ログイン済みユーザー | フィルター条件の作成/編集 |
+| P-31 | `/spaces` | スペース一覧 | ログイン済みユーザー | 所属スペースの参照/移動 |
+| P-32 | `/spaces/:spaceId/*` | 階層ページ表示 | 権限を持つユーザー | パス階層によるページ閲覧/編集 |
+| P-33 | `/templates` | テンプレート一覧 | ログイン済みユーザー | 用途別テンプレート選択 |
+| P-34 | `/reports/daily` | 日報一覧 | ログイン済みユーザー | 日報の時系列表示 |
+| P-35 | `/meetings/:meetingId` | 議事録詳細 | 参加者/関係者 | 議題・決定・Action を管理 |
 
 ## 9. API 一覧
 
@@ -315,6 +408,40 @@ Date: 2026-03-11
 | A-71 | `PATCH` | `/api/admin/settings/slack` | Slack 管理設定更新 |
 | A-72 | `GET` | `/api/admin/system/init-status` | 初期化状態取得 |
 | A-73 | `POST` | `/api/admin/init/bootstrap-admin` | bootstrap 実行または再実行 |
+
+### 9.9 Knowledge 参考の追加 API
+
+| ID | Method | Path | 説明 |
+|---|---|---|---|
+| A-80 | `GET` | `/api/stocks` | 自分のブックマーク一覧取得 |
+| A-81 | `POST` | `/api/posts/:postId/stocks` | ブックマーク追加 |
+| A-82 | `DELETE` | `/api/posts/:postId/stocks` | ブックマーク解除 |
+| A-83 | `POST` | `/api/posts/:postId/attachments` | 記事添付ファイル追加 |
+| A-84 | `DELETE` | `/api/posts/:postId/attachments/:attachmentId` | 記事添付ファイル削除 |
+| A-85 | `POST` | `/api/comments/:commentId/attachments` | コメント添付ファイル追加 |
+| A-86 | `DELETE` | `/api/comments/:commentId/attachments/:attachmentId` | コメント添付ファイル削除 |
+| A-87 | `GET` | `/api/drafts` | 自分の下書き一覧取得 |
+| A-88 | `POST` | `/api/drafts` | 下書き保存 |
+| A-89 | `DELETE` | `/api/drafts/:draftId` | 下書き削除 |
+| A-90 | `GET` | `/api/filters` | 保存フィルター一覧取得 |
+| A-91 | `POST` | `/api/filters` | 保存フィルター作成 |
+| A-92 | `PATCH` | `/api/filters/:filterId` | 保存フィルター更新 |
+| A-93 | `DELETE` | `/api/filters/:filterId` | 保存フィルター削除 |
+
+### 9.10 GROWI / Docmost 参考の追加 API
+
+| ID | Method | Path | 説明 |
+|---|---|---|---|
+| A-100 | `GET` | `/api/spaces` | スペース一覧取得 |
+| A-101 | `POST` | `/api/spaces` | スペース作成 |
+| A-102 | `GET` | `/api/spaces/:spaceId/pages` | 階層ページ一覧取得 |
+| A-103 | `POST` | `/api/spaces/:spaceId/pages/move` | ページ階層移動 |
+| A-104 | `GET` | `/api/templates` | 用途別テンプレート一覧取得 |
+| A-105 | `POST` | `/api/templates/:templateId/instantiate` | テンプレートからページ作成 |
+| A-106 | `GET` | `/api/posts/:postId/presence` | 編集 presence 取得 |
+| A-107 | `POST` | `/api/posts/:postId/action-items` | 議事録 Action Item 追加 |
+| A-108 | `PATCH` | `/api/posts/:postId/action-items/:itemId` | Action Item 更新 |
+| A-109 | `GET` | `/api/posts/:postId/action-items` | Action Item 一覧取得 |
 
 ## 10. 権限制御ルール
 
