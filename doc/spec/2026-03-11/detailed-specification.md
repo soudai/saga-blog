@@ -778,3 +778,72 @@ Date: 2026-03-11
 - 検索は current revision/current tags に対して行う
 - 一覧と詳細の権限制御は別実装にせず、同一 SQL 条件を共有する
 - Slack 通知は同期 API から切り離せるように、通知作成と配信試行を分離する
+
+## 10. 実装前に確定すべき不足情報と提案
+
+本節は、実装着手時に解釈ぶれが起きやすい未確定項目を明示し、MVP を前進させるための推奨デフォルトを定義する。
+
+### 10.1 認証・セキュリティ
+
+| 項目 | 現状の不足 | 提案（MVP 既定値） |
+|---|---|---|
+| セッション Cookie 属性 | `Secure` / `HttpOnly` / `SameSite` の明示がない | `HttpOnly=true`, `Secure=true`, `SameSite=Lax`, `Path=/`, `Max-Age=7d` |
+| CSRF 実装方式 | 「CSRF 対策を行う」のみで手段未定 | Double Submit Cookie 方式を採用し、状態変更 API で `X-CSRF-Token` ヘッダー必須 |
+| Google OAuth state 検証失敗時の扱い | エラー仕様未定 | `400 validation_error` を返し、セッション未発行でログイン画面へ遷移 |
+
+### 10.2 API 契約
+
+| 項目 | 現状の不足 | 提案（MVP 既定値） |
+|---|---|---|
+| `GET` 系の `meta` 形式 | cursor pagination の `meta` 仕様が未記載 | `{ "next_cursor": string|null, "has_next": boolean, "limit": number }` を共通採用 |
+| `PATCH` / `POST` のバリデーション境界 | 文字数・件数上限が未定 | `title<=200`, `change_summary<=500`, `body_md<=200000`, `tags<=20`, `tag<=50` |
+| エラー `details` の構造 | フィールドエラー形式が未定 | `validation_error` 時は `details.fields.<field>=[]string` を返す |
+
+### 10.3 コンテンツ仕様
+
+| 項目 | 現状の不足 | 提案（MVP 既定値） |
+|---|---|---|
+| カテゴリパスの妥当性 | 記法規則が未定 | `^[a-z0-9]+([-/][a-z0-9]+)*$` を採用、保存時は小文字正規化 |
+| タグ正規化 | 大小文字・空白の統一ルールが曖昧 | 前後空白除去 + 小文字化 + 重複除去して保存 |
+| Markdown の危険要素 | HTML サニタイズ方針が未定 | `body_html` はサーバー側で XSS サニタイズ済み HTML のみ返却 |
+
+### 10.4 通知・Slack 連携
+
+| 項目 | 現状の不足 | 提案（MVP 既定値） |
+|---|---|---|
+| Slack 送信リトライ | 失敗時リトライ回数・間隔が未定 | 最大 3 回、指数バックオフ（30s, 2m, 10m） |
+| `notification_delivery_attempts.status=skipped` の条件 | 判定条件が未定 | `slack disabled` / `recipient not linked` / `access revoked` を `skipped` として記録 |
+| 公開通知の受信者スナップショット | 「公開時点」の厳密定義が未定 | publish revision の commit 時点を基準に recipient を確定し保存 |
+
+### 10.5 運用・監査
+
+| 項目 | 現状の不足 | 提案（MVP 既定値） |
+|---|---|---|
+| 監査ログ保持期間 | 保持期間ポリシーが未定 | `notifications` / `delivery attempts` / `bootstrap events` は最低 1 年保持 |
+| 時刻同期 | `occurred_at` の生成責務が未定 | DB サーバー時刻（`now()`）を正とし、アプリ時刻で上書きしない |
+| `make init` 失敗時の再実行指針 | 部分失敗時の扱いが未定 | トランザクション単位で実行し、失敗時はロールバック後に再実行可能とする |
+
+### 10.6 追加確認が必要な論点（次アクション）
+
+- 検索エンジンは PostgreSQL FTS のみで開始するか、将来の外部検索基盤（OpenSearch 等）を前提に抽象化するか。
+- 権限喪失済み通知の UI 表示文言（`access_revoked=true`）をプロダクト文言として確定するか。
+- Slack DM 送信でユーザーが bot を許可していない場合の運用フロー（再連携導線、ヘルプ表示）を決めるか。
+
+## 11. 実装タスク（Phase 0）反映内容
+
+本 PR では、Phase 0（Issue 1 相当）として「実装開始前に固定すべき共通ルール」を仕様へ反映済みとする。
+
+### 11.1 対応済みタスク
+
+- セッション Cookie 属性の既定値を固定（`HttpOnly=true`, `Secure=true`, `SameSite=Lax`, `Max-Age=7d`）
+- CSRF 方式を Double Submit Cookie + `X-CSRF-Token` 必須に固定
+- cursor pagination 共通 `meta` 形式を固定（`next_cursor`, `has_next`, `limit`）
+- `validation_error` の `details.fields` 構造を固定
+- 入力バリデーション上限（title, body, tags 等）を固定
+- カテゴリ/タグの正規化と Markdown サニタイズ方針を固定
+
+### 11.2 Phase 1 への引き継ぎ条件
+
+- 認証実装時は、`GET /api/auth/google/callback` の state 不正時挙動を `400 validation_error` で統一する
+- セッション関連 API は 10.1 の Cookie/CSRF 既定値に必ず準拠する
+- API 追加時は 10.2 の `meta` / `error.details` 形式を再利用する
