@@ -181,32 +181,6 @@ Date: 2026-03-11
 - コメント通知、メンション通知は recipient 単位で送る
 - Slack identity が未連携のユーザーにはアプリ内通知のみ送る
 
-### 6.14 Knowledge 参照で追加する機能要件
-
-`support-project/knowledge` の公開実装（画面構成・API・機能モジュール）を参照し、MVP 以降で必要になる確度が高い機能を要件として追加する。
-
-- 添付ファイル管理
-  - 記事本文・コメントから参照できる添付ファイルをアップロード / ダウンロードできる
-  - 添付ファイルのアクセス権は記事の閲覧権と同一にする
-- 下書き / 自動保存
-  - 記事編集中の下書きを自動保存し、復元できる
-  - ブラウザクラッシュや通信断の復帰をサポートする
-- ストック（あとで読む）
-  - ユーザー単位で記事をストック（保存）し、一覧表示できる
-  - ストックは通知対象とせず、個人の整理機能とする
-- テンプレート
-  - 記事作成時にテンプレートを選択して初期本文を展開できる
-  - テンプレートは管理者が作成 / 更新 / 廃止できる
-- アンケート
-  - 記事にアンケートフォームを埋め込み、回答を集計できる
-  - 回答権限は記事の閲覧権限と同一にする
-- プレゼンテーション表示
-  - Markdown 記事をスライド形式で閲覧できる
-  - 既存記事 URL からプレゼン表示へ遷移できる
-- 通知連携の拡張
-  - Slack 以外に Webhook（例: Teams / Discord / 独自Bot）を配信チャネルとして追加可能にする
-  - 配信先ごとに有効 / 無効、再送、失敗ログ確認を管理画面で行える
-
 ## 7. 機能一覧
 
 | ID | 機能名 | 優先度 | 説明 |
@@ -228,13 +202,6 @@ Date: 2026-03-11
 | F-15 | カテゴリ / タグ | Must | 記事分類と絞り込みに使う |
 | F-16 | テンプレート | Should | 投稿テンプレートを提供する |
 | F-17 | Watch | Could | 記事購読通知を提供する |
-| F-18 | 添付ファイル | Should | 記事 / コメントに添付ファイルを紐付ける |
-| F-19 | 下書き自動保存 | Should | 編集途中データを保存 / 復元する |
-| F-20 | ストック | Should | あとで読む記事を個人単位で管理する |
-| F-21 | テンプレート管理 | Should | 管理者が投稿テンプレートを管理する |
-| F-22 | アンケート | Could | 記事内アンケートの作成 / 回答を管理する |
-| F-23 | プレゼン表示 | Could | 記事をスライド表示で閲覧できる |
-| F-24 | Webhook通知 | Should | Slack 以外の通知先に配信できる |
 
 ## 8. ページ一覧
 
@@ -265,13 +232,6 @@ Date: 2026-03-11
 | P-23 | `/admin/groups/:groupId/members` | グループメンバー管理 | 管理者 | メンバー追加 / 削除 |
 | P-24 | `/admin/integrations/slack` | Slack 管理設定 | 管理者 | Bot 設定、通知先設定 |
 | P-25 | `/admin/system/init-status` | 初期化状態確認 | 管理者 | bootstrap 状態確認 |
-| P-26 | `/posts/:postId/attachments` | 添付ファイル管理 | 権限を持つユーザー | 添付の追加 / 削除 / 一覧 |
-| P-27 | `/drafts` | 下書き一覧 | ログイン済みユーザー | 自動保存された編集中記事の復元 |
-| P-28 | `/stocks` | ストック一覧 | ログイン済みユーザー | 個人保存した記事一覧 |
-| P-29 | `/admin/templates` | テンプレート管理 | 管理者 | テンプレート作成 / 更新 / 廃止 |
-| P-30 | `/posts/:postId/survey` | アンケート | 権限を持つユーザー | 記事に紐づくアンケート回答 |
-| P-31 | `/posts/:postId/presentation` | プレゼン表示 | 権限を持つユーザー | 記事のスライド表示 |
-| P-32 | `/admin/integrations/webhooks` | Webhook 管理設定 | 管理者 | 通知先追加 / 無効化 / 再送 |
 
 ## 9. API 一覧
 
@@ -356,34 +316,6 @@ Date: 2026-03-11
 | A-72 | `GET` | `/api/admin/system/init-status` | 初期化状態取得 |
 | A-73 | `POST` | `/api/admin/init/bootstrap-admin` | bootstrap 実行または再実行 |
 
-### 9.9 添付ファイル / 下書き / ストック
-
-| ID | Method | Path | 説明 |
-|---|---|---|---|
-| A-80 | `POST` | `/api/posts/:postId/attachments` | 添付ファイル登録 |
-| A-81 | `GET` | `/api/posts/:postId/attachments` | 添付ファイル一覧取得 |
-| A-82 | `DELETE` | `/api/posts/:postId/attachments/:attachmentId` | 添付ファイル削除 |
-| A-83 | `GET` | `/api/drafts` | 下書き一覧取得 |
-| A-84 | `POST` | `/api/drafts` | 下書き保存（自動保存含む） |
-| A-85 | `DELETE` | `/api/drafts/:draftId` | 下書き削除 |
-| A-86 | `GET` | `/api/stocks` | ストック一覧取得 |
-| A-87 | `POST` | `/api/posts/:postId/stocks` | ストック登録 |
-| A-88 | `DELETE` | `/api/posts/:postId/stocks` | ストック解除 |
-
-### 9.10 テンプレート / アンケート / プレゼン / Webhook
-
-| ID | Method | Path | 説明 |
-|---|---|---|---|
-| A-90 | `GET` | `/api/templates` | テンプレート一覧取得 |
-| A-91 | `POST` | `/api/templates` | テンプレート作成 |
-| A-92 | `PATCH` | `/api/templates/:templateId` | テンプレート更新 |
-| A-93 | `POST` | `/api/posts/:postId/surveys` | 記事アンケート作成 |
-| A-94 | `POST` | `/api/posts/:postId/surveys/:surveyId/answers` | アンケート回答 |
-| A-95 | `GET` | `/api/posts/:postId/presentation` | プレゼン表示用データ取得 |
-| A-96 | `GET` | `/api/admin/settings/webhooks` | Webhook 配信設定取得 |
-| A-97 | `PATCH` | `/api/admin/settings/webhooks` | Webhook 配信設定更新 |
-| A-98 | `POST` | `/api/admin/webhooks/:deliveryId/retry` | Webhook 失敗配信の再送 |
-
 ## 10. 権限制御ルール
 
 - すべての API と画面は認証前提とする
@@ -427,8 +359,7 @@ Date: 2026-03-11
 - 外部向け公開 API
 - メール通知
 - 公開 Webhook 提供
-- Watch の MVP 実装
-- アンケート / プレゼン表示の MVP 実装
+- Watch / テンプレートの MVP 実装
 
 ## 14. 今後の設計入力
 
@@ -456,6 +387,9 @@ Date: 2026-03-11
 | F-22 | ピン留め（運用告知） | Could | 重要記事を上位表示するピン留め設定を管理者が操作できる |
 | F-23 | Webhook 通知 | Could | 記事公開・コメント作成などのイベントを外部システムへ Webhook 配信できる |
 | F-24 | ユーザー招待 / サインアップ管理 | Could | 招待制または承認制サインアップの有効化・承認ワークフローを提供する |
+| F-25 | 下書き自動保存 / 復元 | Should | 編集途中の本文を自動保存し、編集中断後に復元できる |
+| F-26 | 記事アンケート | Could | 記事にアンケートを埋め込み、回答収集と集計を行える |
+| F-27 | プレゼン表示 | Could | Markdown 記事をスライド形式で閲覧できる |
 
 ### 15.2 追加機能要件（UI）
 
@@ -467,6 +401,9 @@ Date: 2026-03-11
 | P-29 | `/admin/pins` | ピン留め管理 | 管理者 | ホーム上位表示の優先記事を設定する |
 | P-30 | `/admin/webhooks` | Webhook 管理 | 管理者 | Webhook エンドポイント設定、署名鍵、再送制御 |
 | P-31 | `/admin/users/invitations` | 招待 / 承認管理 | 管理者 | 招待発行、承認待ちユーザー処理 |
+| P-32 | `/drafts` | 下書き一覧 | ログイン済みユーザー | 自動保存された編集中記事を一覧/復元する |
+| P-33 | `/posts/:postId/survey` | 記事アンケート | 記事閲覧権限を持つユーザー | 記事に紐づくアンケート回答と結果表示 |
+| P-34 | `/posts/:postId/presentation` | プレゼン表示 | 記事閲覧権限を持つユーザー | 記事本文をスライド表示で閲覧する |
 
 ### 15.3 追加機能要件（API）
 
@@ -488,6 +425,10 @@ Date: 2026-03-11
 | A-93 | `POST` | `/api/admin/webhooks/:webhookId/test` | Webhook テスト送信 |
 | A-94 | `GET` | `/api/admin/invitations` | 招待一覧取得 |
 | A-95 | `POST` | `/api/admin/invitations` | 招待作成 |
+| A-96 | `GET` | `/api/drafts` | 下書き一覧取得（自分のみ） |
+| A-97 | `POST` | `/api/drafts` | 下書き保存（自動保存含む） |
+| A-98 | `POST` | `/api/posts/:postId/surveys/:surveyId/answers` | 記事アンケート回答 |
+| A-99 | `GET` | `/api/posts/:postId/presentation` | プレゼン表示用データ取得 |
 
 ### 15.4 仕様反映時の実装ガイド
 
